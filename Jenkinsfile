@@ -8,7 +8,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/JosAbaafe/example-voting-app.git'
-                sh ' cd example-voting-app'
+                sh 'ls'
             }
         }
 
