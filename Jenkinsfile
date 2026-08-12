@@ -13,7 +13,9 @@ pipeline {
 
       stage('Build') {
     steps {
-        sh 'docker compose build'
+        dir('YOUR_FOLDER_NAME') {
+            sh 'docker compose build'
+        }
     }
 }
 
@@ -25,7 +27,9 @@ stage('Security Scan') {
 
 stage('Deploy') {
     steps {
-        sh 'docker compose up -d'
+        dir('YOUR_FOLDER_NAME') {
+            sh 'docker compose up -d'
+        }
     }
 }
     }
