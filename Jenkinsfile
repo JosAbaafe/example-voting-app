@@ -11,33 +11,21 @@ pipeline {
             }
         }
 
-       stage('Check Docker') {
-            steps {
-                sh 'docker --version'
-                sh 'docker compose version'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker compose up -d --build'
-            }
-        }
-
-        stage('Trivy Security Scan') {
-           steps {
-                sh "trivy image --severity HIGH,CRITICAL myapp:${BUILD_NUMBER}"
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-
-        failure {
-            echo 'Pipeline failed. Check the console output.'
-        }
+       stage('Build') {
+    steps {
+        sh 'docker compose build'
     }
 }
+
+stage('Security Scan') {
+    steps {
+        sh 'trivy image --severity HIGH,CRITICAL votingapp:latest'
+    }
+}
+
+stage('Deploy') {
+    steps {
+        sh 'docker compose up -d'
+    }
+}
+    }
