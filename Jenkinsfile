@@ -1,24 +1,42 @@
-pipeline{
-  agent any
-  stages{
-    stage('Git Check Out'){
-      steps{
-        git branch: 'main', url: 'https://github.com/JosAbaafe/example-voting-app.git'
-      }
+pipeline {
+
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/JosAbaafe/example-voting-app.git'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running application tests...'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t votingapp:${BUILD_NUMBER} .'
+            }
+        }
+
+        stage('Trivy Security Scan') {
+            steps {
+                sh 'trivy image votingapp:${BUILD_NUMBER}'
+            }
+        }
     }
-    stage('Test'){
-      steps{
-        echo 'Testing'
-      }
-    }
-    stage('Build Docker Image'){
-      steps{
-        sh 'docker build -t votingapp:${BUILD_NUMBER} .'
-    }
-  }
-    stage('Security Checks'){
-      steps{
-        sh ' trivy image votingapp:${BUILD_NUMBER}'
-      }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed. Check the console output.'
+        }
     }
 }
