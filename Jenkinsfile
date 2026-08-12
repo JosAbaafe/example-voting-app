@@ -11,9 +11,10 @@ pipeline {
             }
         }
 
-        stage('Test') {
+       stage('Check Docker') {
             steps {
-                echo 'Running application tests...'
+                sh 'docker --version'
+                sh 'docker compose version'
             }
         }
 
