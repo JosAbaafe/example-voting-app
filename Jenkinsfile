@@ -21,10 +21,11 @@ pipeline {
 
 stage('Security Scan') {
     steps {
-        sh 'trivy image --severity HIGH,CRITICAL votingapp:latest'
+        sh 'trivy image --severity HIGH,CRITICAL testing-pipeline-vote:latest'
+        sh 'trivy image --severity HIGH,CRITICAL testing-pipeline-result:latest'
+        sh 'trivy image --severity HIGH,CRITICAL testing-pipeline-worker:latest'
     }
 }
-
 stage('Deploy') {
     steps {
         dir('YOUR_FOLDER_NAME') {
