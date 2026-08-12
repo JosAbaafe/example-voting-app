@@ -24,8 +24,8 @@ pipeline {
         }
 
         stage('Trivy Security Scan') {
-            steps {
-                sh 'trivy image votingapp:${BUILD_NUMBER}'
+           steps {
+                sh "trivy image --severity HIGH,CRITICAL myapp:${BUILD_NUMBER}"
             }
         }
     }
