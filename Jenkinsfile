@@ -28,9 +28,13 @@ stage('Security Scan') {
 }
 stage('Deploy') {
     steps {
-        dir('YOUR_FOLDER_NAME') {
-            sh 'docker compose up -d'
-        }
+        sh 'docker compose up -d'
+    }
+}
+
+stage('Health Check') {
+    steps {
+        sh 'docker compose ps'
     }
 }
     }
