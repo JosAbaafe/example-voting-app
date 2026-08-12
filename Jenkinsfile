@@ -8,7 +8,6 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/JosAbaafe/example-voting-app.git'
-                sh 'ls'
             }
         }
 
@@ -20,7 +19,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker-compose up -d --build'
+                sh 'docker compose up -d --build'
             }
         }
 
