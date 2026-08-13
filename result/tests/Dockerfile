@@ -1,12 +1,29 @@
-FROM node:8.9-slim
+FROM node:18-slim
 
-RUN apt-get update -qq && apt-get install -qy \ 
-    ca-certificates \
-    bzip2 \
-    curl \
-    libfontconfig \
-    --no-install-recommends
-RUN yarn global add phantomjs-prebuilt
-ADD . /app
-WORKDIR /app
-CMD ["/app/tests.sh"]
+# add curl for healthcheck, and upgrade all OS packages to pick up
+# security fixes (e.g. libgnutls30) not present in the base image layer
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends curl tini && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/local/app
+
+# update bundled npm to pick up its newer, non-vulnerable version of "tar"
+# (the CVE lives in npm's own dependency tree, not in this project's deps)
+RUN npm install -g npm@latest && \
+    npm install -g nodemon
+
+COPY package*.json ./
+
+RUN npm ci && \
+ npm cache clean --force && \
+ mv /usr/local/app/node_modules /node_modules
+
+COPY . .
+
+ENV PORT=80
+EXPOSE 80
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "server.js"]
