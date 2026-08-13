@@ -11,7 +11,7 @@ WORKDIR /usr/local/app
 
 # Install our requirements.txt
 COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # dev defines a stage for development, where it'll watch for filesystem changes
 FROM base AS dev
