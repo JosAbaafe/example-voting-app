@@ -13,9 +13,7 @@ pipeline {
 
       stage('Build') {
     steps {
-        dir('YOUR_FOLDER_NAME') {
             sh 'docker compose build'
-        }
     }
 }
 
