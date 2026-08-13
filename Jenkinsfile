@@ -2,6 +2,11 @@ pipeline {
 
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
     stages {
 
         stage('Checkout') {
@@ -11,29 +16,74 @@ pipeline {
             }
         }
 
-      stage('Build') {
-    steps {
-            sh 'docker compose build'
-    }
-}
+        stage('Cleanup previous run') {
+            steps {
+                // Removes any leftover containers from a prior failed/aborted run
+                // (including orphans not defined in the current compose file),
+                // so a stale container never blocks a fresh deploy.
+                sh 'docker compose down --remove-orphans --volumes || true'
+            }
+        }
 
-stage('Security Scan') {
-    steps {
-        sh 'trivy image --severity HIGH,CRITICAL testing-pipeline-vote:latest'
-        sh 'trivy image --severity HIGH,CRITICAL testing-pipeline-result:latest'
-        sh 'trivy image --severity HIGH,CRITICAL testing-pipeline-worker:latest'
-    }
-}
-stage('Deploy') {
-    steps {
-        sh 'docker compose up -d'
-    }
-}
+        stage('Build') {
+            steps {
+                sh 'docker compose build'
+            }
+        }
 
-stage('Health Check') {
-    steps {
-        sh 'docker compose ps'
+        stage('Security Scan') {
+            steps {
+                script {
+                    def images = [
+                        'testing-pipeline-vote:latest',
+                        'testing-pipeline-result:latest',
+                        'testing-pipeline-worker:latest'
+                    ]
+                    for (image in images) {
+                        // Report everything HIGH/CRITICAL for visibility...
+                        sh "trivy image --severity HIGH,CRITICAL --exit-code 0 ${image}"
+                        // ...but actually fail the build if any CRITICAL vulnerability
+                        // has a known fix available. Unfixable/no-fix-yet CVEs are
+                        // reported above but won't block the pipeline.
+                        sh "trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 ${image}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                // --wait blocks until all services report healthy (or fails fast
+                // with a clear reason) instead of racing ahead to the next stage.
+                sh 'docker compose up -d --wait --wait-timeout 120'
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh 'docker compose ps'
+                // Fails the stage if any service is not in a healthy/running state.
+                sh '''
+                    unhealthy=$(docker compose ps --format json | grep -c '"Health":"unhealthy"' || true)
+                    if [ "$unhealthy" -gt 0 ]; then
+                        echo "One or more services are unhealthy:"
+                        docker compose ps
+                        exit 1
+                    fi
+                '''
+            }
+        }
     }
-}
+
+    post {
+        always {
+            // Always capture logs before anything gets torn down or the next
+            // run wipes state, so failures are debuggable after the fact.
+            sh 'docker compose logs --no-color > compose.log || true'
+            archiveArtifacts artifacts: 'compose.log', allowEmptyArchive: true
+        }
+        failure {
+            sh 'docker compose down --remove-orphans || true'
+        }
     }
 }
