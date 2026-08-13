@@ -1,0 +1,27 @@
+FROM jenkins/jenkins:lts
+
+USER root
+
+# Docker CLI and tools
+RUN apt-get update && \
+    apt-get install -y docker.io curl wget ca-certificates gnupg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Docker Compose
+RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
+    curl -SL https://github.com/docker/compose/releases/download/v2.39.1/docker-compose-linux-x86_64 \
+    -o /usr/local/lib/docker/cli-plugins/docker-compose && \
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# Trivy
+RUN wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | \
+    gpg --dearmor -o /usr/share/keyrings/trivy.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" \
+    > /etc/apt/sources.list.d/trivy.list && \
+    apt-get update && \
+    apt-get install -y trivy && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+USER jenkins
