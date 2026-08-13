@@ -8,8 +8,8 @@
 # docker buildx build --platform "linux/arm64/v8" .
 
 # build compiles the program for the builder's local platform
-#FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:7.0 AS build
-FROM debian:13-slim
+FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:7.0 AS build
+#FROM debian:13-slim
 ARG TARGETPLATFORM
 ARG TARGETARCH
 ARG BUILDPLATFORM
@@ -23,8 +23,8 @@ COPY . .
 RUN dotnet publish -c release -o /app -a $TARGETARCH --self-contained false --no-restore
 
 # Fix: Explicitly specify target architecture for the final runtime image layer
-FROM debian:13-slim
-#FROM --platform=linux/${TARGETARCH} mcr.microsoft.com/dotnet/runtime:7.0
+#FROM debian:13-slim
+FROM --platform=linux/${TARGETARCH} mcr.microsoft.com/dotnet/runtime:7.0
 WORKDIR /app
 COPY --from=build /app .
 ENTRYPOINT ["dotnet", "Worker.dll"]
