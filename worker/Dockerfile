@@ -23,7 +23,7 @@ COPY . .
 RUN dotnet publish -c release -o /app -a $TARGETARCH --self-contained false --no-restore
 
 # Fix: Explicitly specify target architecture for the final runtime image layer
-from debian:13-slim
+FROM debian:13-slim
 #FROM --platform=linux/${TARGETARCH} mcr.microsoft.com/dotnet/runtime:7.0
 WORKDIR /app
 COPY --from=build /app .
