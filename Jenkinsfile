@@ -2,10 +2,6 @@ pipeline {
 
     agent any
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
 
     stages {
 
@@ -18,9 +14,6 @@ pipeline {
 
         stage('Cleanup previous run') {
             steps {
-                // Removes any leftover containers from a prior failed/aborted run
-                // (including orphans not defined in the current compose file),
-                // so a stale container never blocks a fresh deploy.
                 sh 'docker compose down --remove-orphans --volumes || true'
             }
         }
@@ -40,11 +33,7 @@ pipeline {
                         'testing-pipeline-worker:latest'
                     ]
                     for (image in images) {
-                        // Report everything HIGH/CRITICAL for visibility...
                         sh "trivy image --severity HIGH,CRITICAL --exit-code 0 ${image}"
-                        // ...but actually fail the build if any CRITICAL vulnerability
-                        // has a known fix available. Unfixable/no-fix-yet CVEs are
-                        // reported above but won't block the pipeline.
                         sh "trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 ${image}"
                     }
                 }
