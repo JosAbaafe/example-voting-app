@@ -66,15 +66,17 @@ pipeline {
         }
     }
 
-    //post {
-      //  always {
+    post {
+        always {
             // Always capture logs before anything gets torn down or the next
             // run wipes state, so failures are debuggable after the fact.
-        //    sh 'docker compose logs --no-color > compose.log || true'
+            sh 'docker compose logs --no-color > compose.log || true'
+	    echo '=== PRINTING CRASH LOGS FOR VOTE CONTAINER ==='
+            sh 'docker logs testing-pipeline-vote-1'
           //  archiveArtifacts artifacts: 'compose.log', allowEmptyArchive: true
-        //}
+        }
       //  failure {
     //        sh 'docker compose down --remove-orphans || true'
         //}
-    //}
+    }
 }
