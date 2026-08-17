@@ -33,8 +33,8 @@ pipeline {
                         'testing-pipeline-worker:latest'
                     ]
                     for (image in images) {
-                        sh "trivy image --severity HIGH,CRITICAL --exit-code 0 ${image}"
-                        sh "trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 ${image}"
+                        sh "trivy image --scan vuln --severity HIGH,CRITICAL --exit-code 0 ${image}"
+                        sh "trivy image --scan vuln --severity CRITICAL --ignore-unfixed --exit-code 1 ${image}"
                     }
                 }
             }
