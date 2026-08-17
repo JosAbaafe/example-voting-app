@@ -56,7 +56,8 @@ services:
     volumes:
       - "./healthchecks:/healthchecks"
     healthcheck:
-      test: /healthchecks/redis.sh
+      test: ["CMD", "sh", "/healthchecks/redis.sh"]
+#      test: /healthchecks/redis.sh
       interval: "5s"
     networks:
       - back-tier
