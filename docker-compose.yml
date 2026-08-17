@@ -31,8 +31,8 @@ services:
     depends_on:
       db:
         condition: service_healthy 
-    volumes:
-      - ./result:/usr/local/app
+          #volumes:
+          #- ./result:/usr/local/app
     ports:
       - "9091:80"
       - "127.0.0.1:9229:9229"
