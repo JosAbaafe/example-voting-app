@@ -15,10 +15,10 @@ services:
       - REDIS_HOST=redis
     healthcheck: 
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/', timeout=2)"]
-      interval: 10s
-      timeout: 5s
+      interval: 3s
+      timeout: 2s
       retries: 3
-      start_period: 10s
+      start_period: 1s
      # volumes:
      # - ./vote:/usr/local/app
     ports:
