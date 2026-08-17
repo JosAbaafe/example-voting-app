@@ -13,12 +13,13 @@ services:
         condition: service_healthy
     environment:
       - REDIS_HOST=redis
-    healthcheck: 
-      test: ["CMD-SHELL", "nc -z localhost 80 || nc -z localhost 5000 || exit 1"]
-      interval: 3s
-      timeout: 2s
-      retries: 3
-      start_period: 1s
+    healthcheck:
+      disable: true 
+        #test: ["CMD-SHELL", "nc -z localhost 80 || nc -z localhost 5000 || exit 1"]
+        #interval: 3s
+        #timeout: 2s
+        #retries: 3
+        #start_period: 1s
      # volumes:
      # - ./vote:/usr/local/app
     ports:
