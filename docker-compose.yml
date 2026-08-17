@@ -34,7 +34,7 @@ services:
           #volumes:
           #- ./result:/usr/local/app
     ports:
-      - "9091:80"
+      - "8085:80"
       - "127.0.0.1:9229:9229"
     networks:
       - front-tier
