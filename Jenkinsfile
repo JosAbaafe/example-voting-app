@@ -42,41 +42,63 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                // --wait blocks until all services report healthy (or fails fast
-                // with a clear reason) instead of racing ahead to the next stage.
-                sh 'docker compose up -d --wait --wait-timeout 120'
-            }
-        }
+        stage('Deploy to Staging') {
+    steps {
+        sh 'docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml up -d --wait --wait-timeout 120'
+    }
+}
 
-        stage('Health Check') {
-            steps {
-                sh 'docker compose ps'
-                // Fails the stage if any service is not in a healthy/running state.
-                sh '''
-                    unhealthy=$(docker compose ps --format json | grep -c '"Health":"unhealthy"' || true)
-                    if [ "$unhealthy" -gt 0 ]; then
-                        echo "One or more services are unhealthy:"
-                        docker compose ps
-                        exit 1
-                    fi
-                '''
-            }
+stage('Staging Health Check') {
+    steps {
+        sh 'docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps'
+        sh '''
+            unhealthy=$(docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps --format json | grep -c '"Health":"unhealthy"' || true)
+            if [ "$unhealthy" -gt 0 ]; then
+                echo "One or more staging services are unhealthy:"
+                docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps
+                exit 1
+            fi
+        '''
+    }
+}
+
+stage('Approve Production Deploy') {
+    when { branch 'main' }
+    steps {
+        timeout(time: 30, unit: 'MINUTES') {
+            input message: 'Deploy to Production?', ok: 'Deploy'
         }
     }
+}
 
-    post {
-        always {
-            // Always capture logs before anything gets torn down or the next
-            // run wipes state, so failures are debuggable after the fact.
-            sh 'docker compose logs --no-color > compose.log || true'
-	    echo '=== PRINTING CRASH LOGS FOR VOTE CONTAINER ==='
-            sh 'docker logs testing-pipeline-vote-1'
-          //  archiveArtifacts artifacts: 'compose.log', allowEmptyArchive: true
-        }
-      //  failure {
-    //        sh 'docker compose down --remove-orphans || true'
-        //}
+stage('Deploy to Production') {
+    when { branch 'main' }
+    steps {
+        sh 'docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120'
     }
+}
+
+stage('Production Health Check') {
+    when { branch 'main' }
+    steps {
+        sh 'docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps'
+        sh '''
+            unhealthy=$(docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps --format json | grep -c '"Health":"unhealthy"' || true)
+            if [ "$unhealthy" -gt 0 ]; then
+                echo "One or more production services are unhealthy:"
+                docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps
+                exit 1
+            fi
+        '''
+    }
+}
+
+post {
+    always {
+        sh 'docker compose -p voting-ci logs --no-color > compose.log || true'
+        sh 'docker compose -p voting-ci down --remove-orphans || true'
+        echo '=== PRINTING CRASH LOGS FOR VOTE CONTAINER ==='
+    }
+    ...
+}
 }

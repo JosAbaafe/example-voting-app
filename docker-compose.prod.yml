@@ -1,0 +1,20 @@
+services:
+  vote:
+    restart: always
+    ports:
+      - "9092:80"
+
+  result:
+    entrypoint: node server.js
+    restart: always
+    ports:
+      - "8087:80"
+
+  worker:
+    restart: always
+
+  redis:
+    restart: always
+
+  db:
+    restart: always
