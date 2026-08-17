@@ -7,6 +7,8 @@ pipeline {
 
         stage('Checkout') {
             steps {
+		 sh 'git clean -fdx'
+        	checkout scm
                 git branch: 'main',
                     url: 'https://github.com/JosAbaafe/example-voting-app.git'
             }
