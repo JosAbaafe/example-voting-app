@@ -11,9 +11,11 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
     healthcheck: 
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 15s
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/', timeout=2)"]
+      interval: 10s
       timeout: 5s
       retries: 3
       start_period: 10s
