@@ -1,21 +1,14 @@
 #!/bin/bash
 set -eo pipefail
 
-host="$(hostname -i || echo '127.0.0.1')"
+# Fallback defaults if variables are missing
 user="${POSTGRES_USER:-postgres}"
 db="${POSTGRES_DB:-$POSTGRES_USER}"
-export PGPASSWORD="${POSTGRES_PASSWORD:-}"
 
-args=(
-	# force postgres to not use the local unix socket (test "external" connectibility)
-	--host "$host"
-	--username "$user"
-	--dbname "$db"
-	--quiet --no-align --tuples-only
-)
-
-if select="$(echo 'SELECT 1' | psql "${args[@]}")" && [ "$select" = '1' ]; then
-	exit 0
+# Check readiness locally using pg_isready (fast and doesn't require network binding)
+if pg_isready --username="$user" --dbname="$db"; then
+        exit 0
 fi
 
 exit 1
+
