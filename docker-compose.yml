@@ -53,12 +53,12 @@ services:
 
   redis:
     image: redis:alpine
-    volumes:
-      - "./healthchecks:/healthchecks"
+    # Removed the volumes block since we no longer need the scripts
     healthcheck:
-      test: ["CMD", "sh", "/healthchecks/redis.sh"]
-#      test: /healthchecks/redis.sh
-      interval: "5s"
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     networks:
       - back-tier
 
@@ -69,11 +69,12 @@ services:
       POSTGRES_PASSWORD: "postgres"
     volumes:
       - "db-data:/var/lib/postgresql/data"
-      - "./healthchecks:/healthchecks"
     healthcheck:
-      #      test: /healthchecks/postgres.sh
-      test: ["CMD", "sh", "/healthchecks/postgres.sh"]
-      interval: "5s"
+      # Native pg_isready check directly inline
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     networks:
       - back-tier
 
