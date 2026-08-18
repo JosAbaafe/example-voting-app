@@ -10,6 +10,8 @@ pipeline {
                 checkout scm
                 git branch: 'main',
                     url: 'https://github.com/JosAbaafe/example-voting-app.git'
+                sh 'ls -la'
+                sh 'git log --oneline -5'
             }
         }
 
