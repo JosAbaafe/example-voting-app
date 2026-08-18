@@ -2,13 +2,12 @@ pipeline {
 
     agent any
 
-
     stages {
 
         stage('Checkout') {
             steps {
-		 sh 'git clean -fdx'
-        	checkout scm
+                sh 'git clean -fdx'
+                checkout scm
                 git branch: 'main',
                     url: 'https://github.com/JosAbaafe/example-voting-app.git'
             }
@@ -92,14 +91,22 @@ pipeline {
                 '''
             }
         }
+    }
 
-        post {
-            always {
-                sh 'docker compose -p voting-ci logs --no-color > compose.log || true'
-                sh 'docker compose -p voting-ci down --remove-orphans || true'
-                echo '=== PRINTING CRASH LOGS FOR VOTE CONTAINER ==='
-            }
-            ...
+    post {
+        always {
+            sh 'docker compose -p voting-staging logs --no-color > compose-staging.log || true'
+            sh 'docker compose -p voting-prod logs --no-color > compose-prod.log || true'
+            echo '=== PRINTING CRASH LOGS FOR VOTE CONTAINER ==='
         }
-}
+        failure {
+            mail bcc: '',
+                 body: "<b>Failed Jenkins Build</b><br>Project: ${env.JOB_NAME}<br>" +
+                       "Build Number: ${env.BUILD_NUMBER}<br>" +
+                       "URL: ${env.BUILD_URL}",
+                 subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 to: "billmanuel9@gmail.com",
+                 mimeType: 'text/html'
+        }
+    }
 }
