@@ -63,8 +63,17 @@ pipeline {
             }
         }
 
-        stage('Approve Production Deploy') {
+       stage('Approve Production Deploy') {
             steps {
+                mail bcc: '',
+                    body:   "<b>Action Required: Production Deploy Approval</b><br>" +
+                            "Project: ${env.JOB_NAME}<br>" +
+                            "Build Number: ${env.BUILD_NUMBER}<br>" +
+                            "Approve or abort here: <a href='${env.BUILD_URL}input/'>${env.BUILD_URL}input/</a>",
+                    subject: "Approval Needed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    to: "billmanuel9@gmail.com",
+                    mimeType: 'text/html'
+
                 timeout(time: 30, unit: 'MINUTES') {
                     input message: 'Deploy to Production?', ok: 'Deploy'
                 }

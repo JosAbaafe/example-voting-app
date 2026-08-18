@@ -1,6 +1,6 @@
 services:
   vote:
-    restart: always
+    restart: "no"
     ports:
       - "9092:80"
 
