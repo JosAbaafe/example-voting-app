@@ -64,7 +64,6 @@ pipeline {
         }
 
         stage('Approve Production Deploy') {
-            when { branch 'main' }
             steps {
                 timeout(time: 30, unit: 'MINUTES') {
                     input message: 'Deploy to Production?', ok: 'Deploy'
