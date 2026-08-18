@@ -81,7 +81,6 @@ pipeline {
         }
 
         stage('Deploy to Production') {
-            when { branch 'main' }
             steps {
                 sh 'docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120'
             }
