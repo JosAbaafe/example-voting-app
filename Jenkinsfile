@@ -43,63 +43,63 @@ pipeline {
         }
 
         stage('Deploy to Staging') {
-    steps {
-        sh 'docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml up -d --wait --wait-timeout 120'
-    }
-}
-
-stage('Staging Health Check') {
-    steps {
-        sh 'docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps'
-        sh '''
-            unhealthy=$(docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps --format json | grep -c '"Health":"unhealthy"' || true)
-            if [ "$unhealthy" -gt 0 ]; then
-                echo "One or more staging services are unhealthy:"
-                docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps
-                exit 1
-            fi
-        '''
-    }
-}
-
-stage('Approve Production Deploy') {
-    when { branch 'main' }
-    steps {
-        timeout(time: 30, unit: 'MINUTES') {
-            input message: 'Deploy to Production?', ok: 'Deploy'
+            steps {
+                sh 'docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml up -d --wait --wait-timeout 120'
+            }
         }
-    }
-}
 
-stage('Deploy to Production') {
-    when { branch 'main' }
-    steps {
-        sh 'docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120'
-    }
-}
+        stage('Staging Health Check') {
+            steps {
+                sh 'docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps'
+                sh '''
+                    unhealthy=$(docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps --format json | grep -c '"Health":"unhealthy"' || true)
+                    if [ "$unhealthy" -gt 0 ]; then
+                        echo "One or more staging services are unhealthy:"
+                        docker compose -p voting-staging -f docker-compose.yml -f docker-compose.staging.yml ps
+                        exit 1
+                    fi
+                '''
+            }
+        }
 
-stage('Production Health Check') {
-    when { branch 'main' }
-    steps {
-        sh 'docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps'
-        sh '''
-            unhealthy=$(docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps --format json | grep -c '"Health":"unhealthy"' || true)
-            if [ "$unhealthy" -gt 0 ]; then
-                echo "One or more production services are unhealthy:"
-                docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps
-                exit 1
-            fi
-        '''
-    }
-}
+        stage('Approve Production Deploy') {
+            when { branch 'main' }
+            steps {
+                timeout(time: 30, unit: 'MINUTES') {
+                    input message: 'Deploy to Production?', ok: 'Deploy'
+                }
+            }
+        }
 
-post {
-    always {
-        sh 'docker compose -p voting-ci logs --no-color > compose.log || true'
-        sh 'docker compose -p voting-ci down --remove-orphans || true'
-        echo '=== PRINTING CRASH LOGS FOR VOTE CONTAINER ==='
-    }
-    ...
-}
+        stage('Deploy to Production') {
+            when { branch 'main' }
+            steps {
+                sh 'docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120'
+            }
+        }
+
+        stage('Production Health Check') {
+            when { branch 'main' }
+            steps {
+                sh 'docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps'
+                sh '''
+                    unhealthy=$(docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps --format json | grep -c '"Health":"unhealthy"' || true)
+                    if [ "$unhealthy" -gt 0 ]; then
+                        echo "One or more production services are unhealthy:"
+                        docker compose -p voting-prod -f docker-compose.yml -f docker-compose.prod.yml ps
+                        exit 1
+                    fi
+                '''
+            }
+        }
+
+        post {
+            always {
+                sh 'docker compose -p voting-ci logs --no-color > compose.log || true'
+                sh 'docker compose -p voting-ci down --remove-orphans || true'
+                echo '=== PRINTING CRASH LOGS FOR VOTE CONTAINER ==='
+            }
+            ...
+        }
 }
 }
